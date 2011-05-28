@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+import os
+import sys
+import logging
+from optparse import OptionParser
+from ConfigParser import SafeConfigParser
+
+if __name__ == '__main__':
+    parser = OptionParser()
+    parser.add_option('-f', '--config-file', dest="configfile", help="config file", default=os.path.expanduser("~/.bankscrape"))
+    parser.add_option('-s', '--config-section', dest="configsection", help="config section", default='[banktype]')
+    (options, args) = parser.parse_args()
+    banktypename = args[0]
+    if options.configsection == '[banktype]':
+        options.configsection = banktypename
+    config = SafeConfigParser()
+    config.read(options.configfile)
+    config_items = dict(config.items(options.configsection))
+
+    banktypes = __import__('bankscrape.banks', globals(), locals(), [banktypename], -1)
+    banktype = getattr(banktypes, banktypename)
+    csv = banktype.scrape(config_items)
+    sys.stdout.write(csv)
