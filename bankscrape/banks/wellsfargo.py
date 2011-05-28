@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 import logging
 import os, sys, re, StringIO, csv
-from optparse import OptionParser
-from ConfigParser import SafeConfigParser
 
 from BeautifulSoup import BeautifulSoup
-from scraper import *
-import optionsparser
-import configparser
+from bankscrape.scraper import *
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARN)
@@ -63,13 +59,9 @@ def transactions_to_csv(transactions):
     writer.writerows(transactions)
     return stringio.getvalue()
 
-if __name__ == '__main__':
+def scrape(config_items):
     logging.basicConfig()
 
-    option_parser = optionsparser.get_parser()
-    (options, args) = option_parser.parse_args()
-    config_items = configparser.get_items(options)
-    
     username = config_items['username']
     password = config_items['password']
 
@@ -80,4 +72,4 @@ if __name__ == '__main__':
     logger.debug("parsing transactions")
     transactions = parse_account_page(account_page_html)
     trans_csv = transactions_to_csv(transactions)
-    sys.stdout.write(trans_csv)
+    return trans_csv
