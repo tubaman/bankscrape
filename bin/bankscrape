@@ -2,8 +2,8 @@
 import os
 import sys
 import logging
+import ConfigParser
 from optparse import OptionParser
-from ConfigParser import SafeConfigParser
 
 if __name__ == '__main__':
     parser = OptionParser(usage="%prog [options] bankname")
@@ -16,11 +16,18 @@ if __name__ == '__main__':
         parser.error("You must specify and bankname")
     if options.configsection == '[bankname]':
         options.configsection = bankname
-    config = SafeConfigParser()
-    config.read(options.configfile)
-    config_items = dict(config.items(options.configsection))
-
     banknames = __import__('bankscrape.banks', globals(), locals(), [bankname], -1)
-    bank = getattr(banknames, bankname)
+    try:
+        bank = getattr(banknames, bankname)
+    except AttributeError:
+        parser.error("Can't find module for bank name '%s'" % bankname)
+
+    config = ConfigParser.SafeConfigParser()
+    config.read(options.configfile)
+    try:
+        config_items = dict(config.items(options.configsection))
+    except ConfigParser.NoSectionError:
+        parser.error("Can't find config section '%s'.  Check your config file(%s) or specify a different config section(--config-section)" % (options.configsection, options.configfile))
+
     csv = bank.scrape(config_items)
     sys.stdout.write(csv)
