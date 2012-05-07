@@ -50,7 +50,11 @@ def parse_account_page(pagehtml):
     soup = BeautifulSoup(pagehtml)
     table = soup.find(name='table', attrs={'id': 'DDATransactionTable'})
     rows = table.find('tbody').findAll('tr')
-    trans = [[col2entry(col) for col in row.findAll(recursive=False)] for row in rows]
+    trans = list()
+    for row in rows:
+        tran = [col2entry(col) for col in row.findAll(recursive=False)]
+        if len(tran) == 4:
+            trans.append(tran)
     return trans
 
 def transactions_to_csv(transactions):
