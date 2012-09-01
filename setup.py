@@ -7,5 +7,5 @@ setup(name='bankscrape',
     author_email="tubaman@fattuba.com",
     packages=['bankscrape', 'bankscrape.banks'],
     scripts=['scripts/bankscrape'],
-    install_requires=['BeautifulSoup==3.1.0.1'],
+    install_requires=['BeautifulSoup>=3.1'],
     )
