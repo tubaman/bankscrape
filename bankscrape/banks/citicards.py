@@ -3,9 +3,9 @@ import os, sys, re, StringIO, csv
 from datetime import datetime
 
 from BeautifulSoup import BeautifulSoup
-from bankscrape.scraper import *
+import requests
 
-SCRAPER = Scraper()
+SCRAPER = requests.session()
 
 def login(username, password):
     response = SCRAPER.get('https://www.citicards.com/cards/wv/home.do')
@@ -18,7 +18,7 @@ def login(username, password):
     }
     response = SCRAPER.post('https://www.accountonline.com/cards/svc/Login.do', login_data)
     # remove weird javascript that breaks beautiful soup
-    html = response.read().replace('</fo"+"nt>', '')
+    html = response.text.replace('</fo"+"nt>', '')
     html = html.replace('_msg3: "</font>"', '')
     html = html.replace('_msg3: "</ul>"', '')
     html = html.replace('_msg3: "</p>"', '')
@@ -47,7 +47,7 @@ def parse_date(datestr):
 def get_transactions(date):
     response = SCRAPER.get('https://www.accountonline.com/cards/svc/StatementDownload.do?dateRange=%s&viewType=csv' % date)
     trans = []
-    for line in response.readlines():
+    for line in response.text.splitlines():
         tran = line.split('\t')
         if len(tran) < 3:
             continue
