@@ -2,7 +2,7 @@
 import logging
 import os, sys, re, StringIO, csv
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 import requests
 from bankscrape.scraper import unescape_html
 

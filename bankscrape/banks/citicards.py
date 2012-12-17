@@ -2,7 +2,7 @@
 import os, sys, re, StringIO, csv
 from datetime import datetime
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 import requests
 
 SCRAPER = requests.session()
