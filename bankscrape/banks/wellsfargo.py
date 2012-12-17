@@ -3,12 +3,13 @@ import logging
 import os, sys, re, StringIO, csv
 
 from BeautifulSoup import BeautifulSoup
-from bankscrape.scraper import *
+import requests
+from bankscrape.scraper import unescape_html
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARN)
 
-SCRAPER = Scraper()
+SCRAPER = requests.session()
 
 def login(username, password):
     SCRAPER.get('https://www.wellsfargo.com/')
@@ -21,14 +22,14 @@ def login(username, password):
     }
     SCRAPER.post('https://online.wellsfargo.com/signon', login_data)
     response = SCRAPER.get('https://online.wellsfargo.com/das/cgi-bin/session.cgi?screenid=SIGNON_PORTAL_PAUSE')
-    return response
+    return response.text
 
 def handle_stupid_online_statement_question(pagehtml):
     soup = BeautifulSoup(pagehtml)
     remindme_url = soup.find(name='input', attrs={'name': 'Considering'}).parent['action']
     data = {'Considering': 'Remind me later'}
     response = SCRAPER.post(remindme_url, data)
-    return load_account_page(response, handle_error=False)
+    return load_account_page(response.text, handle_error=False)
 
 def load_account_page(mainpagehtml, handle_error=True):
     soup = BeautifulSoup(mainpagehtml)
@@ -41,7 +42,7 @@ def load_account_page(mainpagehtml, handle_error=True):
         else:
             raise
     response = SCRAPER.get(account_url)
-    return response
+    return response.text
 
 def col2entry(col):
     return unescape_html(col.contents[0].strip())
