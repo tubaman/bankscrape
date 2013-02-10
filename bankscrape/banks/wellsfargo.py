@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+import os, sys, re, csv
 import logging
-import os, sys, re, StringIO, csv
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 from bs4 import BeautifulSoup
 import requests
@@ -59,7 +63,7 @@ def parse_account_page(pagehtml):
     return trans
 
 def transactions_to_csv(transactions):
-    stringio = StringIO.StringIO()
+    stringio = StringIO()
     writer = csv.writer(stringio)
     writer.writerows(transactions)
     return stringio.getvalue()

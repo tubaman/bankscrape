@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-import os, sys, re, StringIO, csv
+import os, sys, re, csv
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
 from datetime import datetime
 
 from bs4 import BeautifulSoup
@@ -8,7 +12,7 @@ import requests
 SCRAPER = requests.session()
 
 def login(username, password):
-    response = SCRAPER.get('https://www.citicards.com/cards/wv/home.do')
+    response = SCRAPER.get('https://creditcards.citi.com')
     login_data = {
         'USERNAME': username,
         'PASSWORD': password,
@@ -54,13 +58,14 @@ def get_transactions(date):
         trans_date, amount, desc = [d.strip() for d in tran[:3]]
         trans_date = parse_date(trans_date)
         trans.append([trans_date, desc, amount])
-    trans.sort(cmp=lambda x,y: cmp(x[0], y[0]))
+    #trans.sort(cmp=lambda x,y: cmp(x[0], y[0]))
+    trans.sort(key=lambda x: x[0])
     trans.reverse()
     trans = [[datetime.strftime(t[0], "%m/%d/%Y"), t[1], t[2]] for t in trans]
     return trans
 
 def transactions_to_csv(transactions):
-    stringio = StringIO.StringIO()
+    stringio = StringIO()
     writer = csv.writer(stringio)
     writer.writerows(transactions)
     return stringio.getvalue()
