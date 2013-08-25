@@ -1,15 +1,35 @@
 #!/usr/bin/env python
 import logging
+import ssl
 import os, sys, re, StringIO, csv
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.poolmanager import PoolManager
 from bankscrape.scraper import unescape_html
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARN)
 
-SCRAPER = requests.session()
+class TLSv1Adapter(HTTPAdapter):
+    """Force TLSv1
+
+    Wells Fargo hangs with requests' default SSL setup so hard-set
+    TLSv1 here.
+
+    http://lukasa.co.uk/2013/01/Choosing_SSL_Version_In_Requests/
+
+    """
+
+    def init_poolmanager(self, connections, maxsize, **kwargs):
+        self.poolmanager = PoolManager(num_pools=connections,
+                                       maxsize=maxsize,
+                                       ssl_version=ssl.PROTOCOL_TLSv1)
+
+
+SCRAPER = requests.Session()
+SCRAPER.mount('https://', TLSv1Adapter())
 
 def login(username, password):
     SCRAPER.get('https://www.wellsfargo.com/')
