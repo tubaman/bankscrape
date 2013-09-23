@@ -8,21 +8,43 @@ import requests
 SCRAPER = requests.session()
 
 def login(username, password):
-    response = SCRAPER.get('https://www.citicards.com/cards/wv/home.do')
+    response = SCRAPER.get('https://online.citibank.com/US/JPS/portal/Index.do')
     login_data = {
-        'USERNAME': username,
-        'PASSWORD': password,
-        'NEXT_SCREEN': '/UnbilledTrans',
-        'siteId': 'CB',
-        'cookie_domain': 'citicards',
+        'SYNC_TOKEN': '',
+        'ioBlackBox': '',
+        'ssoFlag': '',
+        'efdBTZ': '-5',
+        'efdCSR': '1280x800',
+        'username': username,
+        'usernameMasked': mask(username),
+        'password': password,
     }
-    response = SCRAPER.post('https://www.accountonline.com/cards/svc/Login.do', login_data)
+    response = SCRAPER.post('https://online.citibank.com/US/JSO/signon/ProcessUsernameSignon.do', login_data)
+
+    match = re.search("JFP_CSRF_TOKEN='(.*)';", response.text)
+    jfp_token = match.group(1)
+
+    response = SCRAPER.post('https://online.citibank.com/US/REST/accountsPanel/getCustomerAccounts.jws?ttc=742&JFP_TOKEN=%s' % jfp_token, {})
+    j = response.json()
+    # assume only one card and it's the one we want (index 0)
+    account_id = j['accountsSummaryViewObj']['categoryList'][0]['products'][0]['accountInstanceId']
+    response = SCRAPER.get('https://online.citibank.com/US/JSO/SSO/Cards.do?targetAOApp=accountactivity&selectedCCIndex=%s' % account_id)
+    response = SCRAPER.post('https://online.citibank.com/US/JSO/SSO/CardsSSO.do', {'targetAOApp': 'accountactivity', 'selectedCCIndex': account_id})
+    soup = BeautifulSoup(response.text)
+    form = soup.find('form')
+    action = form.attrs['action']
+    data = dict([(i.attrs['name'], i.attrs['value']) for i in form.findAll('input')])
+    response = SCRAPER.post(action, data)
+
     # remove weird javascript that breaks beautiful soup
     html = response.text.replace('</fo"+"nt>', '')
     html = html.replace('_msg3: "</font>"', '')
     html = html.replace('_msg3: "</ul>"', '')
     html = html.replace('_msg3: "</p>"', '')
     return html
+
+def mask(username):
+    return username[:2] + '*' * (len(username) - 4) + username[-2:]
 
 def parse_account_page(pagehtml):
     soup = BeautifulSoup(pagehtml)
